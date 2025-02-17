@@ -151,10 +151,11 @@ def clear():
     flash(f"Historique des ventes du mois {mois} vidé.", "info")
     return redirect(url_for('totaux', mois=mois))
 
-@app.errorhandler(500)
-def internal_error(error):
-    app.logger.error('Erreur interne: %s', error)
-    return "Une erreur est survenue, consultez les logs pour plus de détails.", 500
+
+#@app.errorhandler(500)
+#def internal_error(error):
+ #   app.logger.error('Erreur interne: %s', error)
+ #   return "Une erreur est survenue, consultez les logs pour plus de détails.", 500
 
 
 if __name__ == '__main__':
