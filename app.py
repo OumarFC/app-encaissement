@@ -4,6 +4,7 @@ from datetime import date
 import csv
 import io
 from functools import wraps
+import os
 
 app = Flask(__name__)
 app.secret_key = 'votre_cle_secrete'  # Remplacez par une clé sécurisée
@@ -152,7 +153,5 @@ def clear():
 
 
 if __name__ == '__main__':
-    init_db()
-    app.run(debug=True, host='0.0.0.0', port=8080)
-
-
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
