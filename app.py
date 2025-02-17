@@ -6,7 +6,7 @@ import io
 from functools import wraps
 import os
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder="templates")
 app.secret_key = 'votre_cle_secrete'  # Remplacez par une clé sécurisée
 
 # Configuration d'authentification (identifiants hardcodés pour la démonstration)
@@ -150,6 +150,11 @@ def clear():
     conn.close()
     flash(f"Historique des ventes du mois {mois} vidé.", "info")
     return redirect(url_for('totaux', mois=mois))
+
+@app.errorhandler(500)
+def internal_error(error):
+    app.logger.error('Erreur interne: %s', error)
+    return "Une erreur est survenue, consultez les logs pour plus de détails.", 500
 
 
 if __name__ == '__main__':
