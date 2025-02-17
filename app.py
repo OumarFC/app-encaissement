@@ -36,7 +36,7 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-@app.route('\login', methods=['GET', 'POST'])
+@app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         username = request.form.get('username')
