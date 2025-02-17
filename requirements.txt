@@ -1,0 +1,15 @@
+asgiref==3.6.0
+Django==4.1.7
+django-extensions==3.2.1
+flake8==4.0.1
+flake8-html==0.4.3
+Jinja2==3.1.2
+MarkupSafe==2.1.2
+mccabe==0.6.1
+Pillow==9.4.0
+pycodestyle==2.8.0
+pyflakes==2.4.0
+Pygments==2.14.0
+review==1510
+sqlparse==0.4.3
+tzdata==2022.7

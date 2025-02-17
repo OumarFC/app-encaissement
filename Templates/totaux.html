@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Total Mensuel</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body>
+<div class="container">
+    <nav class="navbar navbar-expand-lg navbar-light bg-light mt-3">
+        <a class="navbar-brand" href="{{ url_for('index') }}">Accueil</a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('export') }}">Exporter CSV</a></li>
+            </ul>
+            <span class="navbar-text">
+                <a href="{{ url_for('logout') }}">Déconnexion</a>
+            </span>
+        </div>
+    </nav>
+    
+    <h1 class="mt-4">Total des Encaissements pour le Mois {{ mois }}</h1>
+    <p class="lead">Total : {{ total }}€</p>
+    
+    <!-- Bouton pour vider l'historique du mois avec confirmation -->
+    <form action="{{ url_for('clear') }}" method="POST" onsubmit="return confirm('Êtes-vous sûr de vouloir vider l\'historique des ventes du mois ?');">
+        <input type="hidden" name="mois" value="{{ mois }}">
+        <button type="submit" class="btn btn-danger">Vider l'historique des ventes du mois</button>
+    </form>
+    
+    <a href="{{ url_for('index') }}" class="btn btn-primary mt-3">Retour à l'accueil</a>
+</div>
+</body>
+</html>
