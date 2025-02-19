@@ -5,18 +5,14 @@ from datetime import date
 import csv
 import io
 from functools import wraps
-import sqlite3
+# import sqlite3  <-- Plus nécessaire
 
 app = Flask(__name__, template_folder="templates")
 app.secret_key = os.environ.get('SECRET_KEY', 'votre_cle_secrete')
 
-# Configuration de la base de données
-# Utilisez la variable d'environnement DATABASE_URL pour PostgreSQL,
-# sinon, par défaut, SQLite pour le développement local.
-#app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///encaissements.db')
+# Configuration de la base de données pour PostgreSQL
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'postgresql://encaissement_user:JwxoKC6AgNPx2GYdjmSo13R0zKacCWRi@dpg-cuqrghdumphs73evdis0-a.oregon-postgres.render.com/encaissement')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
 db = SQLAlchemy(app)
 
 class Encaissement(db.Model):
@@ -24,7 +20,6 @@ class Encaissement(db.Model):
     date = db.Column(db.String(10), nullable=False)  # Format YYYY-MM-DD
     produit = db.Column(db.String(100), nullable=False)
     montant = db.Column(db.Float, nullable=False)
-
 
 def login_required(f):
     @wraps(f)
@@ -35,30 +30,28 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-def get_db_connection():
-    conn = sqlite3.connect("encaissement.db")
-    conn.row_factory = sqlite3.Row  # Pour accéder aux colonnes par leur nom
-    return conn
-
+# La fonction get_db_connection() n'est plus nécessaire avec SQLAlchemy
+# def get_db_connection():
+#     conn = sqlite3.connect("encaissement.db")
+#     conn.row_factory = sqlite3.Row  # Pour accéder aux colonnes par leur nom
+#     return conn
 
 @app.route('/', methods=['GET', 'POST'])
 @login_required
 def index():
-    conn = get_db_connection()
     if request.method == 'POST':
-        # Ajout d'un nouvel encaissement
+        # Récupération des données du formulaire
         date_encaissement = request.form['date']
         produit = request.form['produit']
-        montant = request.form['montant']
-        conn.execute(
-            'INSERT INTO encaissements (date, produit, montant) VALUES (?, ?, ?)',
-            (date_encaissement, produit, montant)
-        )
-        conn.commit()
+        montant = float(request.form['montant'])
+        # Création d'une instance du modèle Encaissement
+        new_enc = Encaissement(date=date_encaissement, produit=produit, montant=montant)
+        db.session.add(new_enc)
+        db.session.commit()
         flash("Encaissement ajouté", "success")
         return redirect(url_for('index'))
     
-    # Pour GET, récupération des paramètres de filtrage (seulement les dates)
+    # Pour GET, récupération des paramètres de filtrage (dates)
     start_date = request.args.get('start_date', '')
     end_date = request.args.get('end_date', '')
     try:
@@ -66,28 +59,18 @@ def index():
     except ValueError:
         limit = 20
 
-    # Construction de la requête selon le filtre de dates
-    query = "SELECT * FROM encaissements"
-    params = []
-    conditions = []
+    # Construction de la requête SQLAlchemy en fonction des filtres
+    query = Encaissement.query
     if start_date:
-        conditions.append("date >= ?")
-        params.append(start_date)
+        query = query.filter(Encaissement.date >= start_date)
     if end_date:
-        conditions.append("date <= ?")
-        params.append(end_date)
-    if conditions:
-        query += " WHERE " + " AND ".join(conditions)
-    query += " ORDER BY date DESC LIMIT ?"
-    params.append(limit)
-    
-    encaissement = conn.execute(query, tuple(params)).fetchall()
-    conn.close()
+        query = query.filter(Encaissement.date <= end_date)
+    encaissements = query.order_by(Encaissement.date.desc()).limit(limit).all()
     
     current_date = date.today().strftime("%Y-%m-%d")
     return render_template('index.html',
                            current_date=current_date,
-                           encaissement=encaissement,
+                           encaissement=encaissements,
                            start_date=start_date,
                            end_date=end_date,
                            selected_limit=limit)
@@ -124,16 +107,16 @@ def totaux():
 
 @app.route('/export', methods=['GET'])
 def export():
-    encaissement = Encaissement.query.order_by(Encaissement.date.desc()).all()
+    encaissements = Encaissement.query.order_by(Encaissement.date.desc()).all()
     output = io.StringIO()
     writer = csv.writer(output)
     writer.writerow(['Date', 'Produit', 'Montant'])
-    for enc in encaissement:
+    for enc in encaissements:
         writer.writerow([enc.date, enc.produit, "%.2f" % enc.montant])
     output.seek(0)
     return Response(output, mimetype="text/csv", headers={"Content-Disposition": "attachment;filename=encaissement.csv"})
 
-# Routes de connexion/déconnexion (comme précédemment)
+# Routes de connexion/déconnexion
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
