@@ -36,14 +36,10 @@ def login_required(f):
     return decorated_function
 
 def get_db_connection():
-    conn = sqlite3.connect("encaissements.db")
+    conn = sqlite3.connect("encaissement.db")
     conn.row_factory = sqlite3.Row  # Pour accéder aux colonnes par leur nom
     return conn
 
-# Initialiser la base de données (à faire une seule fois)
-@app.before_request
-def create_tables():
-    db.create_all()
 
 @app.route('/', methods=['GET', 'POST'])
 @login_required
@@ -85,13 +81,13 @@ def index():
     query += " ORDER BY date DESC LIMIT ?"
     params.append(limit)
     
-    encaissements = conn.execute(query, tuple(params)).fetchall()
+    encaissement = conn.execute(query, tuple(params)).fetchall()
     conn.close()
     
     current_date = date.today().strftime("%Y-%m-%d")
     return render_template('index.html',
                            current_date=current_date,
-                           encaissements=encaissements,
+                           encaissement=encaissement,
                            start_date=start_date,
                            end_date=end_date,
                            selected_limit=limit)
@@ -128,14 +124,14 @@ def totaux():
 
 @app.route('/export', methods=['GET'])
 def export():
-    encaissements = Encaissement.query.order_by(Encaissement.date.desc()).all()
+    encaissement = Encaissement.query.order_by(Encaissement.date.desc()).all()
     output = io.StringIO()
     writer = csv.writer(output)
     writer.writerow(['Date', 'Produit', 'Montant'])
-    for enc in encaissements:
+    for enc in encaissement:
         writer.writerow([enc.date, enc.produit, "%.2f" % enc.montant])
     output.seek(0)
-    return Response(output, mimetype="text/csv", headers={"Content-Disposition": "attachment;filename=encaissements.csv"})
+    return Response(output, mimetype="text/csv", headers={"Content-Disposition": "attachment;filename=encaissement.csv"})
 
 # Routes de connexion/déconnexion (comme précédemment)
 @app.route('/login', methods=['GET', 'POST'])
