@@ -126,6 +126,30 @@
         {% endfor %}
       </tbody>
     </table>
+
+    <!-- Section Total Journalier -->
+<div class="card my-4">
+    <div class="card-body text-center">
+      <h5>Total Journalier pour le {{ current_date }}</h5>
+      <p>Total des encaissements : <strong>{{ "%.2f"|format(today_total) }}€</strong></p>
+      <div class="form-group row justify-content-center">
+        <label for="fond_caisse" class="col-sm-4 col-form-label">Fond de caisse :</label>
+        <div class="col-sm-2">
+          <input type="number" class="form-control" id="fond_caisse" step="0.01" value="0.00">
+        </div>
+      </div>
+      <p>Net (Total - Fond) : <span id="net_total">{{ "%.2f"|format(today_total) }}€</span></p>
+    </div>
+  </div>
+  
+  <script>
+    var todayTotal = {{ today_total }};
+    document.getElementById('fond_caisse').addEventListener('input', function(){
+      var fond = parseFloat(this.value) || 0.0;
+      var net = todayTotal - fond;
+      document.getElementById('net_total').textContent = net.toFixed(2) + "€";
+    });
+  </script>
     
 <!-- Formulaire pour sélectionner le nombre de lignes (affiché sous le tableau) -->
 <div class="mt-4 text-center">

@@ -5,7 +5,6 @@ from datetime import date
 import csv
 import io
 from functools import wraps
-# import sqlite3  <-- Plus nécessaire
 
 app = Flask(__name__, template_folder="templates")
 app.secret_key = os.environ.get('SECRET_KEY', 'votre_cle_secrete')
@@ -30,28 +29,21 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# La fonction get_db_connection() n'est plus nécessaire avec SQLAlchemy
-# def get_db_connection():
-#     conn = sqlite3.connect("encaissement.db")
-#     conn.row_factory = sqlite3.Row  # Pour accéder aux colonnes par leur nom
-#     return conn
-
 @app.route('/', methods=['GET', 'POST'])
 @login_required
 def index():
     if request.method == 'POST':
-        # Récupération des données du formulaire
+        # Récupération des données du formulaire pour ajouter un encaissement
         date_encaissement = request.form['date']
         produit = request.form['produit']
         montant = float(request.form['montant'])
-        # Création d'une instance du modèle Encaissement
         new_enc = Encaissement(date=date_encaissement, produit=produit, montant=montant)
         db.session.add(new_enc)
         db.session.commit()
         flash("Encaissement ajouté", "success")
         return redirect(url_for('index'))
     
-    # Pour GET, récupération des paramètres de filtrage (dates)
+    # Pour GET, récupération des paramètres de filtrage (dates) et du nombre de lignes
     start_date = request.args.get('start_date', '')
     end_date = request.args.get('end_date', '')
     try:
@@ -59,21 +51,26 @@ def index():
     except ValueError:
         limit = 20
 
-    # Construction de la requête SQLAlchemy en fonction des filtres
+    # Construction de la requête avec SQLAlchemy en appliquant les filtres
     query = Encaissement.query
     if start_date:
         query = query.filter(Encaissement.date >= start_date)
     if end_date:
         query = query.filter(Encaissement.date <= end_date)
-    encaissements = query.order_by(Encaissement.date.desc()).limit(limit).all()
+    # Tri par ID décroissant pour afficher les nouveaux enregistrements en premier
+    encaissements = query.order_by(Encaissement.id.desc()).limit(limit).all()
     
     current_date = date.today().strftime("%Y-%m-%d")
+    # Calcul du total journalier pour la date du jour
+    today_total = db.session.query(db.func.sum(Encaissement.montant)).filter(Encaissement.date == current_date).scalar() or 0.0
+    
     return render_template('index.html',
                            current_date=current_date,
                            encaissement=encaissements,
                            start_date=start_date,
                            end_date=end_date,
-                           selected_limit=limit)
+                           selected_limit=limit,
+                           today_total=today_total)
 
 @app.route('/edit/<int:id>', methods=['GET', 'POST'])
 def edit(id):
@@ -116,7 +113,6 @@ def export():
     output.seek(0)
     return Response(output, mimetype="text/csv", headers={"Content-Disposition": "attachment;filename=encaissement.csv"})
 
-# Routes de connexion/déconnexion
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
