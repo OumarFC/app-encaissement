@@ -5,6 +5,7 @@ from datetime import date
 import csv
 import io
 from functools import wraps
+from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__, template_folder="templates")
 app.secret_key = os.environ.get('SECRET_KEY', 'votre_cle_secrete')
@@ -14,12 +15,30 @@ app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'postgres
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
+# Modèle pour les encaissements
 class Encaissement(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     date = db.Column(db.String(10), nullable=False)  # Format YYYY-MM-DD
     produit = db.Column(db.String(100), nullable=False)
     montant = db.Column(db.Float, nullable=False)
 
+# Nouveau modèle pour le fond de caisse
+class FondCaisse(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    fond = db.Column(db.Float, nullable=False)
+
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(50), unique=True, nullable=False)
+    password_hash = db.Column(db.String(128), nullable=False)
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password)
+    
+    def check_password(self, password):
+        return check_password_hash(self.password_hash, password)
+
+# Décorateur pour protéger les routes
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -29,11 +48,12 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+# Route principale
 @app.route('/', methods=['GET', 'POST'])
 @login_required
 def index():
     if request.method == 'POST':
-        # Récupération des données du formulaire pour ajouter un encaissement
+        # Ajout d'un nouvel encaissement
         date_encaissement = request.form['date']
         produit = request.form['produit']
         montant = float(request.form['montant'])
@@ -43,7 +63,7 @@ def index():
         flash("Encaissement ajouté", "success")
         return redirect(url_for('index'))
     
-    # Pour GET, récupération des paramètres de filtrage (dates) et du nombre de lignes
+    # Récupération des filtres GET
     start_date = request.args.get('start_date', '')
     end_date = request.args.get('end_date', '')
     try:
@@ -51,26 +71,21 @@ def index():
     except ValueError:
         limit = 20
 
-    # Construction de la requête avec SQLAlchemy en appliquant les filtres
     query = Encaissement.query
     if start_date:
         query = query.filter(Encaissement.date >= start_date)
     if end_date:
         query = query.filter(Encaissement.date <= end_date)
-    # Tri par ID décroissant pour afficher les nouveaux enregistrements en premier
+    # Trier par ID décroissant pour avoir les nouveaux en tête
     encaissements = query.order_by(Encaissement.id.desc()).limit(limit).all()
     
     current_date = date.today().strftime("%Y-%m-%d")
-    # Calcul du total journalier pour la date du jour
-    today_total = db.session.query(db.func.sum(Encaissement.montant)).filter(Encaissement.date == current_date).scalar() or 0.0
-    
     return render_template('index.html',
                            current_date=current_date,
                            encaissement=encaissements,
                            start_date=start_date,
                            end_date=end_date,
-                           selected_limit=limit,
-                           today_total=today_total)
+                           selected_limit=limit)
 
 @app.route('/edit/<int:id>', methods=['GET', 'POST'])
 def edit(id):
@@ -113,6 +128,37 @@ def export():
     output.seek(0)
     return Response(output, mimetype="text/csv", headers={"Content-Disposition": "attachment;filename=encaissement.csv"})
 
+# Nouvelle route pour le Total Journalier et gestion du fond de caisse
+@app.route('/journalier', methods=['GET', 'POST'])
+@login_required
+def journalier():
+    current_date = date.today().strftime("%Y-%m-%d")
+    today_total = db.session.query(db.func.sum(Encaissement.montant)).filter(Encaissement.date == current_date).scalar() or 0.0
+
+    # Récupérer (ou créer) le fond de caisse
+    fond_record = FondCaisse.query.first()
+    if not fond_record:
+        fond_record = FondCaisse(fond=0.0)
+        db.session.add(fond_record)
+        db.session.commit()
+
+    if request.method == 'POST':
+        # Seul l'admin peut modifier le fond de caisse
+        if session.get('username') == 'admin':
+            try:
+                new_fond = float(request.form.get('fond_caisse'))
+            except ValueError:
+                new_fond = fond_record.fond
+            fond_record.fond = new_fond
+            db.session.commit()
+            flash("Fond de caisse mis à jour", "success")
+        else:
+            flash("Accès refusé : seuls les administrateurs peuvent modifier le fond de caisse", "danger")
+        return redirect(url_for('journalier'))
+    
+    return render_template('journalier.html', current_date=current_date, today_total=today_total, fond=fond_record.fond)
+
+# Routes de connexion/déconnexion
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
@@ -120,6 +166,7 @@ def login():
         password = request.form.get('password')
         if username == 'admin' and password == 'password':
             session['logged_in'] = True
+            session['username'] = username  # Stocker le nom d'utilisateur pour vérification ultérieure
             flash("Connexion réussie", "success")
             return redirect(url_for('index'))
         else:
@@ -132,6 +179,35 @@ def logout():
     flash("Déconnexion réussie", "info")
     return redirect(url_for('login'))
 
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        username = request.form.get('username')
+        password = request.form.get('password')
+        password_confirm = request.form.get('password_confirm')
+        if not username or not password or not password_confirm:
+            flash("Tous les champs sont obligatoires", "danger")
+            return redirect(url_for('register'))
+        if password != password_confirm:
+            flash("Les mots de passe ne correspondent pas", "danger")
+            return redirect(url_for('register'))
+        # Vérifier si le nom d'utilisateur existe déjà
+        if User.query.filter_by(username=username).first():
+            flash("Ce nom d'utilisateur est déjà pris", "danger")
+            return redirect(url_for('register'))
+        # Créer le nouvel utilisateur
+        new_user = User(username=username)
+        new_user.set_password(password)
+        db.session.add(new_user)
+        db.session.commit()
+        flash("Compte créé, vous pouvez maintenant vous connecter", "success")
+        return redirect(url_for('login'))
+    return render_template('register.html')
+
+
 if __name__ == '__main__':
+    # Créez les tables si elles n'existent pas
+    with app.app_context():
+        db.create_all()
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=True)

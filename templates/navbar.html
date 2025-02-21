@@ -1,0 +1,31 @@
+<!-- templates/navbar.html -->
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container">
+      <a class="navbar-brand" href="{{ url_for('index') }}">Accueil</a>
+      <div class="collapse navbar-collapse">
+        <ul class="navbar-nav mx-auto">
+          <li class="nav-item">
+            <a class="nav-link btn btn-outline-primary btn-custom mx-2" href="{{ url_for('totaux') }}">Totaux Mensuel</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link btn btn-outline-success btn-custom mx-2" href="{{ url_for('journalier') }}">Total Journalier</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link btn btn-outline-info btn-custom mx-2" href="{{ url_for('export') }}">Exporter CSV</a>
+          </li>
+        </ul>
+        <ul class="navbar-nav">
+          {% if session.logged_in %}
+          <li class="nav-item">
+            <a class="nav-link btn btn-danger btn-custom" href="{{ url_for('logout') }}">Déconnexion</a>
+          </li>
+          {% else %}
+          <li class="nav-item">
+            <a class="nav-link btn btn-primary btn-custom" href="{{ url_for('login') }}">Connexion</a>
+          </li>
+          {% endif %}
+        </ul>
+      </div>
+    </div>
+  </nav>
+  

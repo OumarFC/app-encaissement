@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="utf-8">
-  <title>Connexion</title>
+  <title>Inscription</title>
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
   <style>
     .container {
@@ -17,7 +17,7 @@
 </head>
 <body>
   <div class="container">
-    <h1 class="text-center">Connexion</h1>
+    <h1 class="text-center">Créer un compte</h1>
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         {% for category, message in messages %}
@@ -25,20 +25,24 @@
         {% endfor %}
       {% endif %}
     {% endwith %}
-    <form method="POST" action="{{ url_for('login') }}">
+    <form method="POST" action="{{ url_for('register') }}">
       <div class="form-group">
-        <label for="username">Nom d'utilisateur</label>
+        <label for="username">Nom d'utilisateur :</label>
         <input type="text" class="form-control" name="username" id="username" required>
       </div>
       <div class="form-group">
-        <label for="password">Mot de passe</label>
+        <label for="password">Mot de passe :</label>
         <input type="password" class="form-control" name="password" id="password" required>
       </div>
+      <div class="form-group">
+        <label for="password_confirm">Confirmer le mot de passe :</label>
+        <input type="password" class="form-control" name="password_confirm" id="password_confirm" required>
+      </div>
       <div class="text-center">
-        <button type="submit" class="btn btn-primary btn-custom">Se connecter</button>
+        <button type="submit" class="btn btn-primary btn-custom">S'inscrire</button>
       </div>
       <p class="text-center mt-3">
-        Pas encore de compte ? <a href="{{ url_for('register') }}">S'inscrire</a>
+        Vous avez déjà un compte ? <a href="{{ url_for('login') }}">Se connecter</a>
       </p>
     </form>
   </div>
