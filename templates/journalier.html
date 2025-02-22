@@ -1,35 +1,33 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="utf-8">
-  <title>Total Journalier</title>
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-  <style>
-    .navbar-nav { flex: 1; justify-content: center; }
-    .btn-custom { padding: 10px 20px; font-size: 16px; }
-    .container { max-width: 800px; }
-  </style>
-</head>
-<body>
-  {% include 'navbar.html' %}
+{% extends "base.html" %}
+{% block title %}Total Journalier{% endblock %}
+{% block content %}
+  <h1 class="text-center">Total Journalier pour le {{ current_date }}</h1>
+  <p class="lead text-center">Total des encaissements : <span class="value-display">{{ "%.2f"|format(today_total) }}€</span></p>
   
-  <div class="container mt-4 text-center">
-    <h1>Total Journalier pour le {{ current_date }}</h1>
-    <p class="lead">Total des encaissements : <strong>{{ "%.2f"|format(today_total) }}€</strong></p>
-    
-    {% if session.username == 'admin' %}
-      <form method="POST" action="{{ url_for('journalier') }}" class="form-inline justify-content-center">
-        <div class="form-group mb-2">
-          <label for="fond_caisse" class="mr-2">Fond de caisse :</label>
-          <input type="number" class="form-control" name="fond_caisse" id="fond_caisse" step="0.01" value="{{ "%.2f"|format(fond) }}">
-        </div>
-        <button type="submit" class="btn btn-primary mb-2 ml-2">Modifier le fond</button>
-      </form>
-    {% else %}
-      <p>Fond de caisse : <strong>{{ "%.2f"|format(fond) }}€</strong></p>
-    {% endif %}
-    
-    <p>Net (Total + Fond de caisse) : <span id="net_total">{{ "%.2f"|format(today_total + fond) }}€</span></p>
-  </div>
-</body>
-</html>
+  {% if session.username == 'admin' %}
+    <form method="POST" action="{{ url_for('journalier') }}" class="form-inline justify-content-center mt-3">
+      <div class="form-group mb-2">
+        <label for="fond_caisse" class="mr-2">Fond de caisse :</label>
+        <input type="number" class="form-control" name="fond_caisse" id="fond_caisse" step="0.01" value="{{ "%.2f"|format(fond) }}">
+      </div>
+      <button type="submit" class="btn btn-primary btn-custom mb-2 ml-2">Modifier le fond</button>
+    </form>
+  {% else %}
+    <p class="mt-3 text-center">Fond de caisse : <span class="value-display">{{ "%.2f"|format(fond) }}€</span></p>
+  {% endif %}
+  
+  <p class="mt-3 text-center">Net (Total - Fond) : <span id="net_total" class="value-display">{{ "%.2f"|format(today_total - fond) }}€</span></p>
+{% endblock %}
+{% block scripts %}
+<script>
+  var todayTotal = {{ today_total }};
+  var fondInput = document.getElementById('fond_caisse');
+  if(fondInput){
+    fondInput.addEventListener('input', function(){
+      var fond = parseFloat(this.value) || 0.0;
+      var net = todayTotal - fond;
+      document.getElementById('net_total').textContent = net.toFixed(2) + "€";
+    });
+  }
+</script>
+{% endblock %}

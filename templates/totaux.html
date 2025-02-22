@@ -1,30 +1,9 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="utf-8">
-    <title>Total Mensuel</title>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-    <style>
-      .navbar-nav {
-        flex: 1;
-        justify-content: center;
-      }
-      .btn-custom {
-        padding: 10px 20px;
-        font-size: 16px;
-      }
-      .container {
-        max-width: 800px;
-      }
-    </style>
-</head>
-<body>
-  <!-- Barre de navigation centrée -->
-  {% include 'navbar.html' %}
-  <div class="container mt-4 text-center">
-    <h1>Total des Encaissements pour le Mois {{ mois }}</h1>
-    <p class="lead">Total : {{ "%.2f"|format(total) }}€</p>
-    <a href="{{ url_for('index') }}" class="btn btn-primary btn-custom">Retour à l'accueil</a>
+{% extends "base.html" %}
+{% block title %}Totaux Mensuel{% endblock %}
+{% block content %}
+  <h1 class="text-center mb-4">Totaux Mensuel</h1>
+  <p class="lead text-center">Montant total pour le mois : <span class="value-display">{{ "%.2f"|format(total) }}€</span></p>
+  <div class="text-center">
+    <a href="{{ url_for('index') }}" class="btn btn-home btn-custom">Accueil</a>
   </div>
-</body>
-</html>
+{% endblock %}

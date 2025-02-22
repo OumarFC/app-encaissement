@@ -1,22 +1,7 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="utf-8">
-  <title>Connexion</title>
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-  <style>
-    .container {
-      max-width: 400px;
-      margin-top: 50px;
-    }
-    .btn-custom {
-      padding: 10px 20px;
-      font-size: 16px;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
+{% extends "base.html" %}
+{% block title %}Connexion{% endblock %}
+{% block content %}
+  <div class="container" style="max-width:400px; margin-top:50px;">
     <h1 class="text-center">Connexion</h1>
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
@@ -27,11 +12,11 @@
     {% endwith %}
     <form method="POST" action="{{ url_for('login') }}">
       <div class="form-group">
-        <label for="username">Nom d'utilisateur</label>
+        <label for="username">Nom d'utilisateur :</label>
         <input type="text" class="form-control" name="username" id="username" required>
       </div>
       <div class="form-group">
-        <label for="password">Mot de passe</label>
+        <label for="password">Mot de passe :</label>
         <input type="password" class="form-control" name="password" id="password" required>
       </div>
       <div class="text-center">
@@ -42,5 +27,4 @@
       </p>
     </form>
   </div>
-</body>
-</html>
+{% endblock %}

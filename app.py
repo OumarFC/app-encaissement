@@ -30,7 +30,7 @@ class FondCaisse(db.Model):
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(50), unique=True, nullable=False)
-    password_hash = db.Column(db.String(128), nullable=False)
+    password_hash = db.Column(db.String(256), nullable=False)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -63,29 +63,28 @@ def index():
         flash("Encaissement ajouté", "success")
         return redirect(url_for('index'))
     
-    # Récupération des filtres GET
-    start_date = request.args.get('start_date', '')
-    end_date = request.args.get('end_date', '')
+    # Pour GET, définir par défaut le filtre sur la date du jour
+    current_date = date.today().strftime("%Y-%m-%d")
+    start_date = request.args.get('start_date', current_date)
+    end_date = request.args.get('end_date', current_date)
     try:
         limit = int(request.args.get('limit', 20))
     except ValueError:
         limit = 20
 
-    query = Encaissement.query
-    if start_date:
-        query = query.filter(Encaissement.date >= start_date)
-    if end_date:
-        query = query.filter(Encaissement.date <= end_date)
-    # Trier par ID décroissant pour avoir les nouveaux en tête
+    # Construction de la requête avec SQLAlchemy en fonction des filtres
+    query = Encaissement.query.filter(Encaissement.date >= start_date,
+                                       Encaissement.date <= end_date)
+    # Tri par ID décroissant pour afficher les nouveaux en tête
     encaissements = query.order_by(Encaissement.id.desc()).limit(limit).all()
     
-    current_date = date.today().strftime("%Y-%m-%d")
     return render_template('index.html',
                            current_date=current_date,
                            encaissement=encaissements,
                            start_date=start_date,
                            end_date=end_date,
                            selected_limit=limit)
+
 
 @app.route('/edit/<int:id>', methods=['GET', 'POST'])
 def edit(id):
@@ -164,9 +163,19 @@ def login():
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
+        
+        # Vérification pour le compte admin (hardcodé)
         if username == 'admin' and password == 'password':
             session['logged_in'] = True
             session['username'] = username  # Stocker le nom d'utilisateur pour vérification ultérieure
+            flash("Connexion réussie (admin)", "success")
+            return redirect(url_for('index'))
+        
+        # Vérification dans la base de données pour un utilisateur enregistré
+        user = User.query.filter_by(username=username).first()
+        if user and user.check_password(password):
+            session['logged_in'] = True
+            session['username'] = user.username
             flash("Connexion réussie", "success")
             return redirect(url_for('index'))
         else:

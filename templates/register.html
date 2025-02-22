@@ -1,22 +1,7 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="utf-8">
-  <title>Inscription</title>
-  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-  <style>
-    .container {
-      max-width: 400px;
-      margin-top: 50px;
-    }
-    .btn-custom {
-      padding: 10px 20px;
-      font-size: 16px;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
+{% extends "base.html" %}
+{% block title %}Inscription{% endblock %}
+{% block content %}
+  <div class="container" style="max-width:400px; margin-top:50px;">
     <h1 class="text-center">Créer un compte</h1>
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
@@ -46,5 +31,4 @@
       </p>
     </form>
   </div>
-</body>
-</html>
+{% endblock %}

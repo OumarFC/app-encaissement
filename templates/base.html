@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>{% block title %}Mon Application{% endblock %}</title>
+  <!-- Bootstrap CSS -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Open Sans', sans-serif;
+      background-color: #f8f9fa;
+      color: #333;
+    }
+    .container {
+      max-width: 900px;
+      margin-top: 40px;
+    }
+    /* Barre de navigation */
+    .navbar {
+      background-color: #ffffff;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .navbar-brand {
+      font-size: 1.8rem;
+      font-weight: 700;
+      color: #007bff !important;
+    }
+    .navbar-nav .nav-link {
+      font-size: 1.1rem;
+      margin: 0 8px;
+      color: #333 !important;
+    }
+    .navbar-nav .nav-link:hover {
+      color: #505e6d !important;
+    }
+    /* Boutons */
+    .btn-custom {
+      padding: 2px 10px;
+      font-size: 1rem;
+      margin: 1px;
+      border-radius: 4px;
+    }
+    .btn-home {
+      font-size: 1.3rem;
+      font-weight: 700;
+      padding: 2px 10px;
+      background-color: #cedbe9;
+      color: #0c0b0b;
+      border-radius: 4px;
+    }
+    .btn-home:hover {
+      background-color: #dd1add;
+    }
+    /* Titres et textes */
+    h1, h2, h3, h4 {
+      font-weight: 500;
+    }
+    .value-display {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #28a745;
+    }
+    /* Cartes et tableaux */
+    .card {
+      border: none;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+      margin-bottom: 10px;
+    }
+    table.table td, table.table th {
+    padding: 0.25rem !important;  /* Réduit le padding */
+    line-height: 1.0;             /* Réduit l'espacement vertical */
+    }
+    /* Alertes */
+    .alert {
+      font-size: 1rem;
+      font-weight: 500;
+    }
+
+    table.table {
+    border-collapse: collapse; /* Supprime les espaces entre les bordures */
+    border-spacing: 0;         /* Assure qu'il n'y a pas d'espacement */
+    }
+
+  </style>
+  {% block head %}{% endblock %}
+</head>
+<body>
+  {% include 'navbar.html' %}
+  <div class="container mt-4">
+    {% block content %}{% endblock %}
+  </div>
+  <!-- jQuery et Bootstrap JS -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>
