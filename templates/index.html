@@ -77,6 +77,10 @@
           <form action="{{ url_for('delete', id=enc['id']) }}" method="POST" style="display:inline;">
             <button type="submit" class="btn btn-danger btn-sm btn-custom" onclick="return confirm('Confirmer la suppression ?')">Supprimer</button>
           </form>
+            <!-- Si l'enregistrement appartient à l'utilisateur connecté, affichez son identifiant -->
+            {% if enc.created_by == session.username %}
+                <span class="ml-2 text-muted">({{ session.username }})</span>
+            {% endif %}
         </td>
       </tr>
       {% endfor %}

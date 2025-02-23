@@ -6,6 +6,8 @@ import csv
 import io
 from functools import wraps
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask_migrate import Migrate
+
 
 app = Flask(__name__, template_folder="templates")
 app.secret_key = os.environ.get('SECRET_KEY', 'votre_cle_secrete')
@@ -14,6 +16,7 @@ app.secret_key = os.environ.get('SECRET_KEY', 'votre_cle_secrete')
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'postgresql://encaissement_user:JwxoKC6AgNPx2GYdjmSo13R0zKacCWRi@dpg-cuqrghdumphs73evdis0-a.oregon-postgres.render.com/encaissement')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
 # Modèle pour les encaissements
 class Encaissement(db.Model):
@@ -21,6 +24,7 @@ class Encaissement(db.Model):
     date = db.Column(db.String(10), nullable=False)  # Format YYYY-MM-DD
     produit = db.Column(db.String(100), nullable=False)
     montant = db.Column(db.Float, nullable=False)
+    created_by = db.Column(db.String(50), nullable=True)  # Stocke l'identifiant de l'utilisateur
 
 # Nouveau modèle pour le fond de caisse
 class FondCaisse(db.Model):
@@ -57,7 +61,7 @@ def index():
         date_encaissement = request.form['date']
         produit = request.form['produit']
         montant = float(request.form['montant'])
-        new_enc = Encaissement(date=date_encaissement, produit=produit, montant=montant)
+        new_enc = Encaissement(date=date_encaissement, produit=produit, montant=montant, created_by=session.get('username') )
         db.session.add(new_enc)
         db.session.commit()
         flash("Encaissement ajouté", "success")
@@ -87,11 +91,18 @@ def index():
 
 
 @app.route('/edit/<int:id>', methods=['GET', 'POST'])
+@login_required
 def edit(id):
+    # Vérifier si l'utilisateur connecté est l'admin
+    if session.get('username') != 'admin':
+        flash("Accès refusé : seul l'administrateur peut modifier les enregistrements.", "danger")
+        return redirect(url_for('index'))
+    
     enc = Encaissement.query.get(id)
     if enc is None:
         flash("Encaissement non trouvé", "danger")
         return redirect(url_for('index'))
+    
     if request.method == 'POST':
         enc.date = request.form['date']
         enc.produit = request.form['produit']
@@ -99,16 +110,26 @@ def edit(id):
         db.session.commit()
         flash("Encaissement modifié", "success")
         return redirect(url_for('index'))
+    
     return render_template('edit.html', encaissement=enc)
 
+
 @app.route('/delete/<int:id>', methods=['POST'])
+@login_required
 def delete(id):
+    # Vérifier si l'utilisateur connecté est l'admin
+    if session.get('username') != 'admin':
+        flash("Accès refusé : seul l'administrateur peut supprimer les enregistrements.", "danger")
+        return redirect(url_for('index'))
+    
     enc = Encaissement.query.get(id)
     if enc:
         db.session.delete(enc)
         db.session.commit()
         flash("Encaissement supprimé", "info")
+    
     return redirect(url_for('index'))
+
 
 @app.route('/totaux', methods=['GET'])
 def totaux():
