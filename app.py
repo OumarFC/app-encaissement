@@ -51,6 +51,37 @@ def login_required(f):
             return redirect(url_for('login'))
         return f(*args, **kwargs)
     return decorated_function
+    
+@app.route('/change_password', methods=['GET', 'POST'])
+@login_required
+def change_password():
+    # Récupérer l'utilisateur courant depuis la table User en fonction de la session
+    current_username = session.get('username')
+    user = User.query.filter_by(username=current_username).first()
+    
+    if not user:
+        flash("Utilisateur introuvable.", "danger")
+        return redirect(url_for('index'))
+    
+    if request.method == 'POST':
+        current_password = request.form.get('current_password')
+        new_password = request.form.get('new_password')
+        confirm_password = request.form.get('confirm_password')
+        
+        if not user.check_password(current_password):
+            flash("Le mot de passe actuel est incorrect.", "danger")
+            return redirect(url_for('change_password'))
+        if new_password != confirm_password:
+            flash("Les nouveaux mots de passe ne correspondent pas.", "danger")
+            return redirect(url_for('change_password'))
+        
+        # Mise à jour du mot de passe
+        user.set_password(new_password)
+        db.session.commit()
+        flash("Mot de passe modifié avec succès.", "success")
+        return redirect(url_for('index'))
+    
+    return render_template('change_password.html')
 
 # Route principale
 @app.route('/', methods=['GET', 'POST'])
@@ -186,7 +217,7 @@ def login():
         password = request.form.get('password')
         
         # Vérification pour le compte admin (hardcodé)
-        if username == 'admin' and password == 'password':
+        if username == 'admin' and password == 'Dyste1989$':
             session['logged_in'] = True
             session['username'] = username  # Stocker le nom d'utilisateur pour vérification ultérieure
             flash("Connexion réussie (admin)", "success")

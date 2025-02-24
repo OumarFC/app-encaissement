@@ -17,10 +17,13 @@
         <ul class="navbar-nav">
           {% if session.logged_in %}
             <li class="nav-item">
-              <a class="nav-link btn btn-danger btn-custom" href="{{ url_for('logout') }}">Déconnexion</a>
-            </li>
+                <a class="nav-link btn btn-outline-success btn-custom mx-2" href="{{ url_for('change_password') }}">Change mot de passe</a>
+              </li>
             <li class="nav-item">
                 <span class="nav-link btn btn-outline-success btn-custom mx-2">Bonjour {{ session.username }}</span>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link btn btn-danger btn-custom" href="{{ url_for('logout') }}">Déconnexion</a>
             </li>
              {% else %}
             <li class="nav-item">
